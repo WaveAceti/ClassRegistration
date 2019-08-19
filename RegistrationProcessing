@@ -8,3 +8,98 @@ import dblib.Registration;
 
 public class RegistrationProcessing {
     public static void main (Sring[] args) {
+
+        PrintStream cout = System.out;
+        Scanner sc = new Scanner(System.in);
+
+        cout.println("I, Varattha Aceti, certify that this project is my work only. I have not used\n" +
+                "source code from third parties (except those that were discussed in-class).");
+
+
+        cout.println("Please enter your password");
+        Registration db = null;
+        int count = 0;
+        String pass = sc.nextLine();
+        db = new Registration("ism6236", pass);
+
+        cout.println();
+        cout.println("Please enter Year: ");
+        cout.flush();
+        String year = sc.nextLine();
+
+        cout.println();
+        cout.println("Please enter Semester (Fall or Spring): ");
+        cout.flush();
+        String sem = sc.nextLine();
+
+
+        List<String> l = db.getList(Integer.parseInt(year), sem);
+        cout.println(String.format("The available sections for %s %s are: \n%s", sem, year, l));
+
+        cout.println();
+        cout.print(String.format("Enter q to quit, l to list classes, r to register"));
+        cout.flush();
+        //String c = sc.nextLine();
+        //ArrayList<String> regis = new ArrayList<String>();
+        boolean quit = false;
+
+
+        while (!quit) {
+            String c = sc.next().toLowerCase();
+
+            switch (c) {
+                case "L":
+                case "l":
+                    cout.println();
+                    cout.println("Please enter a Student Number: ");
+                    cout.flush();
+                    int stuNo = sc.nextInt();
+
+                    List<String> list = db.getList(stuNo, sem, Integer.parseInt(year));
+                    cout.println(String.format("Student %s enrolled in:", stuNo));
+                    cout.println(String.format("%5s %5s %5s %9s %9s", "CourseNo", "SectionNo", "Room", "Days", "Time"));
+                    for (String s : list) {
+                        cout.println(s);
+                    }
+
+                    break;
+
+                case "R":
+                case "r":
+                    cout.println();
+                    cout.print("Enter Student Number: ");
+                    cout.flush();
+                    stuNo = sc.nextInt();
+
+                    cout.println();
+                    cout.print("Enter Course Number: ");
+                    cout.flush();
+                    String courseNo = sc.nextLine();
+
+                    cout.println();
+                    cout.println("Enter Section Number: ");
+                    cout.flush();
+                    String sectionNo = sc.nextLine();
+
+                    cout.print(String.format("%s, %s", courseNo, sectionNo));
+
+                    int register = db.Register(stuNo, courseNo, sectionNo);
+
+                    //cout.println(String.format("%d records got updated",register));
+                    break;
+
+                default:
+                    quit = true;
+            }
+
+            if (!quit) {
+                cout.println("Enter q to quit, l to list classes, r to register");
+                cout.flush();
+                c = sc.nextLine();
+            }
+
+        }
+
+    }
+
+}
