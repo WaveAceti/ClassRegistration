@@ -1,0 +1,109 @@
+package registrarion;
+
+import java.io.ObjectInputStream
+import java.io.PrintStream;
+import java.net.Socket;
+import java.util.List;
+import java.util.Scanner;
+import java.io.IOException;
+
+public class Client {
+
+    private static ObjectInputStream mObjIn;
+    private static PrintStream mOut;
+    private static Socket mSocket;
+    public static final int mPORT = 1574;
+
+    public static void main(String[] args) {
+        PrintStream cout = System.out;
+        Scanner sc = new Scanner(System.in);
+
+        try {
+            mSocket = new Socket("localhost", mPORT);
+            mObjIn = new ObjectInputStream(mSocket.getInputStream());
+            mOut = new PrintStream(mSocket.getOutputStream());
+
+            cout.println("I, Varattha Aceti, certify that this project is my work only. I have not used\n" +
+                    "source code from third parties (except those that were discussed in-class).");
+
+            cout.println("Please enter your password");
+
+            int count = 0;
+            String pass = sc.nextLine();
+            mOut.println(String.format("login:ism6236:%s", pass));
+            String resp = (String) mObjIn.readObject();
+            cout.println(resp);
+
+            cout.println();
+            cout.println("Please enter Year: ");
+            cout.flush();
+            String year = sc.nextLine();
+
+            cout.println();
+            cout.println("Please enter Semester (Fall or Spring): ");
+            cout.flush();
+            String sem = sc.nextLine();
+
+
+            //List<String> l = db.getList(Integer.parseInt(year), sem);
+            mOut.println(String.format("The available sections for %s %s are: \n%s", sem, year));
+
+            cout.println();
+            cout.print(String.format("Enter q to quit, l to list classes, r to register"));
+            cout.flush();
+            boolean quit = false;
+
+            while (!quit) {
+                String c = sc.next().toLowerCase();
+
+                switch (c) {
+                    case "L":
+                    case "l":
+                        cout.println();
+                        cout.println("Please enter a Student Number: ");
+                        cout.flush();
+                        int stuNo = sc.nextInt();
+
+                        //List<String> list = db.getList(stuNo, sem, Integer.parseInt(year));
+                        mOut.println(String.format("Student %s enrolled in:", stuNo));
+                        mOut.println(String.format("%5s %5s %5s %9s %9s", "CourseNo", "SectionNo", "Room", "Days", "Time"));
+//                        for (String s : list) {
+//                            cout.println(s);
+//                        }
+
+                        break;
+
+                    case "R":
+                    case "r":
+                        cout.println();
+                        cout.println("Register is under construction, please check back later.");
+                        cout.flush();
+
+                        break;
+
+                    default:
+                        quit = true;
+                }
+
+                if (!quit) {
+                    cout.println("Enter q to quit, l to list classes, r to register");
+                    cout.flush();
+                    c = sc.nextLine();
+                }
+
+            }
+
+
+        } catch (IOException e) {
+            cout.println("Server not running, exiting");
+
+            System.exit(-1);
+        } catch (ClassNotFoundException cfe) {
+            cout.println("Abnormal communication with the server, exiting");
+
+            System.exit(-1);
+        }
+
+    }
+
+}
