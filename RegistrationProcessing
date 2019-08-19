@@ -1,0 +1,10 @@
+package jdbcclient;
+
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+import dblib.Registration;
+
+public class RegistrationProcessing {
+    public static void main (Sring[] args) {
