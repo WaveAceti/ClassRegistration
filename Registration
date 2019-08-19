@@ -1,0 +1,186 @@
+package dblib;
+
+import java.sql.*;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.List;
+
+
+public class Registration {
+
+    static private String mservername;
+    static private String mdbname;
+    static private Connection mcn;
+    
+    static {
+        mservername = "MSSQLSERVER";
+        mdbname = "Registration";
+    }
+    
+    public Registration (String uid, String pass) {
+        setConnection (uid, pass);
+    }
+    public boolean IsConnected() {return (mcn != null ? true : false);}
+    
+    public void setConnection(String uid, String pass) {
+        try {
+            Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+            String connectionUrl = String.format("jdbc:sqlserver://localhost\\%s;databaseName=%s;user=%s;password=%s;",mservername,mdbname,uid,pass);
+            mcn = DriverManager.getConnection(connectionUrl);
+        }
+        catch(ClassNotFoundException cfe) {
+            System.out.println(cfe.getMessage());
+        }
+        catch (SQLException se) {
+            System.out.println(se.getMessage());
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    private int TransactSQL(String[] sql) {
+        Statement st = null;
+        int n = 0;
+        try {
+            st = mcn.createStatement();
+            //System.out.println(mcn.getAutoCommit());
+            mcn.setAutoCommit(false);
+
+            for (int i = 0; i < sql.length; i++) {
+                n += st.executeUpdate(sql[i]);
+            }
+            //mcn.rollback();
+            mcn.commit();
+        } catch (SQLException ex) {
+            try {
+                mcn.rollback();
+                ex.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (st != null) {
+                    st.close();
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return n;
+    }
+    
+    public List<String> getList(int year, String semester) {
+        ArrayList<String> rval = new ArrayList<String>();
+        try {
+            Statement s = mcn.createStatement();
+            String sql = String.format("Select sectionNo from SECTION where TotalEnrolled < Capacity AND Year = '%s' AND Semester = '%s' ", year, semester);
+            ResultSet rs = s.executeQuery(sql);
+            while (rs.next()) {
+                String SectionNo = rs.getString(1);
+                rval.add(String.format(SectionNo));
+            }
+            s.close();
+        }
+        catch (SQLException se) {
+            System.out.println(se.getMessage());
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+        finally {
+
+        }
+        return rval;
+    }
+    
+    public List<String> getList(int stuNo, String semester, int year) {
+        ArrayList<String> rval = new ArrayList<String>();
+        try {
+            Statement s = mcn.createStatement();
+            String sql = String.format("Select CourseNo, SectionNo, Room, Days, Time from SECTION inner join STUDENT ON StuNo = '%s' AND Semester = '%s' AND Year = '%s' ", stuNo, semester, year);
+            ResultSet rs = s.executeQuery(sql);
+
+            ResultSetMetaData rsmd = rs.getMetaData();
+            int ncols = rsmd.getColumnCount();
+            String buf = "";
+            for (int i = 1; i <= ncols; i++) {
+                buf += rsmd.getColumnName(i) + "\t";
+            }
+
+            //String buf = "";
+            while (rs.next()) {
+                String courseNo = rs.getString(1);
+                String sectionNo = rs.getString(2);
+                String room = rs.getString(3);
+                String days = rs.getString(4);
+                String time = rs.getString(5);
+                buf = String.format("%5s %8s %9s %7s %8s", courseNo, sectionNo, room, days, time);
+                rval.add(buf);
+            }
+            s.close();
+        }
+        catch (SQLException se) {
+            System.out.println(se.getMessage());
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+        finally {
+
+        }
+        return rval;
+    }
+    
+    public int Register(int stuNo, String courseNo, String sectionNo) {
+
+        Statement st = null;
+        int n = 0;
+        int rval = 0;
+        String[] sql = new String[2];
+        sql[0] = String.format("Insert Into Enrollment (stuNo, courseNo, sectionNo, grade) Values ('%s', '%s', '%s', Null);", stuNo, courseNo, sectionNo);
+        sql[1] = String.format("Update SECTION set TotalEnrolled = (Select count (ENROLLMENT.SectioNo)from ENROLLMENT where ENROLLMENT.SectioNo = '%s' and ENROLLMENT.CourseNo = '%s') where SECTION.SectionNo = '%s' and SECTION.CourseNo = '%s'", sectionNo, courseNo,sectionNo,courseNo);
+
+        try {
+            st = mcn.createStatement();
+            mcn.setAutoCommit(false);
+            for (int i = 0; 1 < sql.length; i++);
+            {
+                n+= st.executeUpdate(sql[1]);
+            }
+            mcn.commit();
+        } catch (SQLException ex) {
+            try {
+                mcn.rollback();
+                ex.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (st != null) {
+                    st.close();
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return rval;
+    }
+    
+    public static void main(String[] args){
+        PrintStream cout = System.out;
+        Registration r = new Registration ("ism6236", "ism6236bo");
+        List <String> l = r.getList(2019, "Fall");
+        List <String> list = r.getList(1,"Fall", 2019);
+        int name = r.Register(1, "ISM6215", "1F19");
+        System.out.println(name);
+        cout.println(l);
+        cout.println(list);
+    }
+ }
